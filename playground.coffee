@@ -37,6 +37,12 @@ domonad = ({result, bind}, functions, init_value) ->
     ([f0].concat functions[1...]).reduce (a, b) ->
         bind a, b
 
+identity_m = ->
+    result: identity
+
+    bind: (mv, f) -> f mv
+
+
 maybe_m = ({is_error}) ->
     zero: -> is_error() #?
 
@@ -116,3 +122,8 @@ u = domonad cont_maybe, [f1, f2, f3], 33
 
 #say u
 u say
+
+cont_identity = cont_t identity_m()
+v = domonad cont_identity, [f1, f2, f3], 33
+
+v say
