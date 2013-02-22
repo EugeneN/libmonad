@@ -1,6 +1,8 @@
 # http://jsfiddle.net/n6GHF/10/
 
-{identity, first, drop_while, is_function} = require 'libprotein'
+{identity, first, drop_while, is_function, partial, metabolize} = require 'libprotein'
+{dispatch_impl} = require 'libprotocol'
+{info, warn, error, debug} = dispatch_impl 'ILogger'
 
 is_null = (v...) ->
     if v.length is 0
@@ -20,7 +22,7 @@ identity_m = ->
 
     bind: (mv, f) -> f mv
 
-# monadic value for error monad - vector [err, value]
+# monadic value for error monad is a vector [err, value]
 OK = undefined
 is_error = ([err, val]) -> err isnt OK
 
@@ -28,14 +30,22 @@ error_m = ->
     result: (v) -> [OK, v]
 
     bind: (mv, f) ->
-        if (is_error mv) then mv else (f mv[1])
+        if (is_error mv)
+            debug '<error_m>', 'error trapped', mv
+            mv
+        else
+            f mv[1]
 
 error_t = (inner) ->
     result: (v) ->
         [OK, (inner.result v)]
 
     bind: (mv, f) ->
-        if (is_error mv) then mv else (inner.bind mv[1], f)
+        if (is_error mv)
+            debug '<error_t>', 'error trapped', mv
+            mv
+        else
+            inner.bind mv[1], f
 
 maybe_m = ({is_error}) ->
     zero: -> is_error() #?
@@ -43,7 +53,11 @@ maybe_m = ({is_error}) ->
     result: (v) -> v
 
     bind: (mv, f) ->
-        if (is_error mv) then mv else (f mv)
+        if (is_error mv)
+            debug '<maybe_m>', 'error trapped', mv
+            mv
+        else
+            f mv
 
     plus: (mvs...) ->
         first (drop_while is_error mvs)
@@ -53,29 +67,37 @@ maybe_t = ({inner, is_error}) ->
         inner.result v
 
     bind: (mv, f) ->
-        if (is_error mv) then mv else (inner.bind mv, f)
+        if (is_error mv)
+            debug '<maybe_t>', 'error trapped', mv
+            mv
+        else
+            inner.bind mv, f
 
 logger_m = (log_fn) ->
+    log = partial log_fn, '<logger_m>'
+
     result: (v) ->
-        log_fn "Got value:", v
+        log "Got value:", {v}
         v
 
     bind: (mv, f) ->
-        log_fn "Going to call f(mv):", f, mv
+        log "Going to call f(mv):", "#{f.meta?.protocol or '-'}/#{(f.meta?.name or f)}", {mv}
         r = f mv
-        log_fn "Got result:", r
+        log "Got result:", {r}
 
 logger_t = (inner, log_fn) ->
+    log = partial log_fn, '<logger_t>'
+
     result: (v) ->
-        log_fn "Got value:", v
+        log "Got value:", {v}
         r = inner.result v
-        log_fn "Got inner monad's result value:", r
+        log "Got inner monad's result value:", {r}
         r
 
     bind: (mv, f) ->
-        log_fn "Going to call f(mv):", f, mv
+        log "Going to call f(mv):", "#{f.meta?.protocol or '-'}/#{(f.meta?.name or f)}", {mv}
         r = inner.bind mv, f
-        log_fn "Got result:", r
+        log "Got result:", {r}
         r
 
 cont_m = ->
@@ -119,17 +141,20 @@ cont_t = (inner) ->
 
             mv ((v) -> (get_h v) c)
 
-
 lift_sync = (arity, f) ->
     ''' Lifts a function:
     f: arg1 -> ... -> argN
     to a function:
     f1: (arg1 -> ... -> argN) -> cont
     '''
-    (args...) ->
-        (c) ->
+    g = (args...) ->
+        h = (c) ->
             res = f args[0...arity]...
             c res
+
+        metabolize f, h
+
+    metabolize f, g
 
 lift_async = (arity, f) ->
     ''' Lifts a function:
@@ -137,9 +162,13 @@ lift_async = (arity, f) ->
     to a function:
     f1: (arg1 -> ... argN) -> cont
     '''
-    (args...) ->
-        (c) ->
+    g = (args...) ->
+        h = (c) ->
             f (args[0...arity-1].concat [c])...
+
+        metabolize f, h
+
+    metabolize f, g
 
 module.exports = {
     domonad,
