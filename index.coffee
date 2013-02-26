@@ -62,7 +62,7 @@ maybe_m = ({is_error}) ->
     plus: (mvs...) ->
         first (drop_while is_error mvs)
 
-maybe_t = ({inner, is_error}) ->
+maybe_t = (inner, {is_error}) ->
     result: (v) ->
         inner.result v
 
@@ -70,6 +70,30 @@ maybe_t = ({inner, is_error}) ->
         if (is_error mv)
             debug '<maybe_t>', 'error trapped', mv
             mv
+        else
+            inner.bind mv, f
+
+# TODO FIXME
+aop_m = () ->
+    result: (v) -> v
+
+    bind: (mv, f) ->
+        if f.meta?.concerns?.after
+            f.meta.concerns.after.map ([check, handle]) ->
+                debug '<aop_m>', "concern found for #{f.meta.protocol}/#{f.meta.name}", mv
+                handle mv if check mv
+
+        f mv
+
+aop_t = (inner) ->
+    result: (v) ->
+        inner.result v
+
+    bind: (mv, f) ->
+        if f.meta?.concerns?.after
+            f.meta.concerns.after.map ([check, handle]) ->
+                debug '<aop_t>', "concern found for #{f.meta.protocol}/#{f.meta.name}", mv
+                handle (inner.bind mv, f) if check mv
         else
             inner.bind mv, f
 
@@ -174,6 +198,7 @@ module.exports = {
     domonad,
     identity_m,
     maybe_m, maybe_t,
+    aop_m, aop_t,
     error_m, error_t,
     cont_m, cont_t,
     logger_m, logger_t,
