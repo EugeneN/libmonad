@@ -1,7 +1,7 @@
 {
   "name": "libmonad",
   "description": "Simple monad library",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": "E.Naumenko",
   "repository": {
     "type" : "git",
