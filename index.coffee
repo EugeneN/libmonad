@@ -1,8 +1,6 @@
 # http://jsfiddle.net/n6GHF/10/
 
 {identity, first, drop_while, is_function, partial, metabolize} = require 'libprotein'
-{dispatch_impl} = require 'libprotocol'
-{info, warn, error, debug} = dispatch_impl 'ILogger'
 
 is_null = (v...) ->
     if v.length is 0
