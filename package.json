@@ -1,16 +1,27 @@
 {
   "name": "libmonad",
   "description": "Simple monad library",
-  "version": "0.0.7",
-  "author": "E.Naumenko",
+  "version": "0.0.74",
+  "author": {
+    "name": "E.Naumenko"
+  },
   "repository": {
-    "type" : "git",
+    "type": "git",
     "url": "https://github.com/EugeneN/libmonad"
   },
   "dependencies": {
-      "libprotein": "*"
+    "libprotein": "*",
+    "console-logger": "*"
   },
-  "scripts": {"postinstall": "coffee -c index.coffee"},
-  "engine" : [ "node >=0.1.102" ],
-  "main" : "./index.js"
+  "scripts": {
+    "postinstall": "coffee -c index.coffee"
+  },
+  "engine": [
+    "node >=0.1.102"
+  ],
+  "main": "./index.js",
+  "readme": "libmonad\n========",
+  "readmeFilename": "README.md",
+  "_id": "libmonad@0.0.73",
+  "_from": "libmonad@*"
 }

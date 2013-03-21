@@ -1,6 +1,7 @@
 # http://jsfiddle.net/n6GHF/10/
 
 {identity, first, drop_while, is_function, partial, metabolize} = require 'libprotein'
+{info, warn, error, debug} = require 'console-logger'
 
 is_null = (v...) ->
     if v.length is 0
@@ -29,7 +30,6 @@ error_m = ->
 
     bind: (mv, f) ->
         if (is_error mv)
-            debug '<error_m>', 'error trapped', mv
             mv
         else
             f mv[1]
@@ -40,7 +40,6 @@ error_t = (inner) ->
 
     bind: (mv, f) ->
         if (is_error mv)
-            debug '<error_t>', 'error trapped', mv
             mv
         else
             inner.bind mv[1], f
@@ -52,7 +51,6 @@ maybe_m = ({is_error}) ->
 
     bind: (mv, f) ->
         if (is_error mv)
-            debug '<maybe_m>', 'error trapped', mv
             mv
         else
             f mv
@@ -66,7 +64,6 @@ maybe_t = (inner, {is_error}) ->
 
     bind: (mv, f) ->
         if (is_error mv)
-            debug '<maybe_t>', 'error trapped', mv
             mv
         else
             inner.bind mv, f
